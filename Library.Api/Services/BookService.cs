@@ -16,12 +16,12 @@ public class BookService : IBookService
 
     public async Task<bool> CreateAsync(Book book)
     {
-        //var existingBook = await GetByIsbnAsync(book.Isbn);
-        //if (existingBook != null)
-        //{
-        //    // Book with the same ISBN already exists
-        //    return false;
-        //}
+        var existingBook = await GetByIsbnAsync(book.Isbn);
+        if (existingBook != null)
+        {
+            // Book with the same ISBN already exists
+            return false;
+        }
 
         using var connection = await _connectionFactory.CreateConnectionAsync();
         //await connection.ExecuteAsync(
@@ -62,8 +62,20 @@ public class BookService : IBookService
             "SELECT * FROM Books WHERE Title LIKE '%' || @SearchTerm || '%' ", new {SearchTerm = searchTerm});
     }
 
-    public Task<bool> UpdateAsync(Book book)
+    public async Task<bool> UpdateAsync(Book book)
     {
-        throw new NotImplementedException();
+        var existingBook = await GetByIsbnAsync(book.Isbn);
+        if (existingBook == null)
+        {
+            // Book with the same ISBN does not exist
+            return false;
+        }
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        var result = await connection.ExecuteAsync(
+            @"UPDATE Books SET Title = @Title, Author = @Author, ShortDescription = @ShortDescription, 
+                    PageCount = @PageCount, ReleaseDate = @ReleaseDate
+                    WHERE Isbn = @Isbn", book);
+
+        return result > 0;
     }
 }

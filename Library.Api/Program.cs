@@ -81,6 +81,22 @@ app.MapGet("books/{isbn}", async (string isbn, IBookService bookService) =>
 });
 
 
+app.MapPut("books/{isbn}", async (string isbn, Book book, IBookService bookService,
+    IValidator<Book> validator) =>
+{
+    book.Isbn = isbn;
+    var validationResult = await validator.ValidateAsync(book);
+    if (!validationResult.IsValid)
+    {
+        return Results.BadRequest(validationResult.Errors); //You may You might not want to expose to your consumers the validator result obejct and you might wanna have yourt own contract, you would do the mapping for that contract here 
+    }
+
+    var updated = await bookService.UpdateAsync(book); //id is mutable so it ill be picked based on id
+    return updated ? Results.Ok(book) : Results.NotFound();
+
+});
+
+
 // Db init here
 var databaseInitializer = app.Services.GetRequiredService<DatabaseInitializer>();
 await databaseInitializer.IntializeAsync();
