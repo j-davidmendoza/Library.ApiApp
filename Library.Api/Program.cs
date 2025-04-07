@@ -55,6 +55,12 @@ app.MapPost("books", async (Book book, IBookService bookService,
 
 app.MapGet("/", () => "Hello World!");
 
+app.MapGet("books", async (IBookService bookService) =>
+{
+    var books = await bookService.GetAllAsync();
+    return Results.Ok(books);
+});
+
 
 // Db init here
 var databaseInitializer = app.Services.GetRequiredService<DatabaseInitializer>();
