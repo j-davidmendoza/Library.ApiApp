@@ -55,8 +55,20 @@ app.MapPost("books", async (Book book, IBookService bookService,
 
 app.MapGet("/", () => "Hello World!");
 
-app.MapGet("books", async (IBookService bookService) =>
+//app.MapGet("books", async (IBookService bookService) =>
+//{
+//    var books = await bookService.GetAllAsync();
+//    return Results.Ok(books);
+//});
+
+app.MapGet("books", async (IBookService bookService, string? searchTerm) =>
 {
+    if (searchTerm is not null && !string.IsNullOrWhiteSpace(searchTerm))
+    {
+        var matchedBooks = await bookService.SearchByTitleAsync(searchTerm);
+        return Results.Ok(matchedBooks);
+    }
+
     var books = await bookService.GetAllAsync();
     return Results.Ok(books);
 });

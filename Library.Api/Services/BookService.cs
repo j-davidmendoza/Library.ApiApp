@@ -55,9 +55,11 @@ public class BookService : IBookService
             "SELECT * FROM Books WHERE Isbn = @Isbn LIMIT 1", new { Isbn = isbn });
     }
 
-    public Task<IEnumerable<Book>> SearchByTitleAsync(string searchTerm)
+    public async Task<IEnumerable<Book>> SearchByTitleAsync(string searchTerm)
     {
-        throw new NotImplementedException();
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+        return await connection.QueryAsync<Book>(
+            "SELECT * FROM Books WHERE Title LIKE '%' || @SearchTerm || '%' ", new {SearchTerm = searchTerm});
     }
 
     public Task<bool> UpdateAsync(Book book)
