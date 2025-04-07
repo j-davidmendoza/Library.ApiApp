@@ -61,6 +61,13 @@ app.MapGet("books", async (IBookService bookService) =>
     return Results.Ok(books);
 });
 
+//Possible to add regex checking here but would need it in the service layer also, for now just not having it unless it is only api layer specific 
+app.MapGet("books/{isbn}", async (string isbn, IBookService bookService) =>
+{ 
+    var book = await bookService.GetByIsbnAsync(isbn);
+    return book is not null ? Results.Ok(book) : Results.NotFound(); //200 if it does exist 404 if it does not exist
+});
+
 
 // Db init here
 var databaseInitializer = app.Services.GetRequiredService<DatabaseInitializer>();
