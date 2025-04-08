@@ -1,12 +1,19 @@
 using FluentValidation;
 using FluentValidation.Results;
+using Library.Api.Auth;
 using Library.Api.Data;
 using Library.Api.Models;
 using Library.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true); //This is everything you need to add more configuration options for your own or 3rd party loads
+
+
+builder.Services.AddAuthentication(ApiKeySchemeConstants.SchemeName)
+    .AddScheme<ApiKeyAuthSchemeOptions, ApiKeyAuthHandler>(ApiKeySchemeConstants.SchemeName, _ => { }); // May not need this because you have JWT auth or a quick authentication you can use here
+builder.Services.AddAuthorization();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -29,7 +36,14 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.MapPost("books", async (Book book, IBookService bookService,
+
+app.UseAuthorization();//After swagger because you dont want swagger to be behind authentication
+
+
+app.MapPost("books",
+//[Authorize(AuthenticationSchemes = ApiKeySchemeConstants.SchemeName)] //This is all you need to authorize this endpoint 
+//[AllowAnonymous] // If you have security by default, you can use this to allow anonymous access to this endpoint, same way as good ole mvc
+async (Book book, IBookService bookService,
     IValidator<Book> validator) =>
 {
     var validationResult = await validator.ValidateAsync(book);
@@ -40,7 +54,7 @@ app.MapPost("books", async (Book book, IBookService bookService,
     }
 
     var created = await bookService.CreateAsync(book);
-    if(!created)
+    if (!created)
     {
         //return Results.BadRequest(new
         //{
@@ -53,7 +67,7 @@ app.MapPost("books", async (Book book, IBookService bookService,
     }
 
     return Results.Created($"/books/{book.Isbn}", book);
-});
+});//.AllowAnonymous(); //You can also do this to allow anonymous access to this endpoint using fluent method, approach is up to you
 
 app.MapGet("/", () => "Hello World!");
 
