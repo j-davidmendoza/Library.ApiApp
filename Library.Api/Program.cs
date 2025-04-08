@@ -96,6 +96,12 @@ app.MapPut("books/{isbn}", async (string isbn, Book book, IBookService bookServi
 
 });
 
+app.MapDelete("books/{isbn}", async (string isbn, IBookService bookSerivce) =>
+{
+    var deleted = await bookSerivce.DeleteAsync(isbn);
+    return deleted ? Results.NoContent() : Results.NotFound();
+});
+
 
 // Db init here
 var databaseInitializer = app.Services.GetRequiredService<DatabaseInitializer>();

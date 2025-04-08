@@ -35,9 +35,14 @@ public class BookService : IBookService
 
     }
 
-    public Task<bool> DeleteAsync(string isbn)
+    public async Task<bool> DeleteAsync(string isbn)
     {
-        throw new NotImplementedException();
+        using var connection = await _connectionFactory.CreateConnectionAsync();
+
+        var result = await connection.ExecuteAsync(
+            @"DELETE FROM Books WHERE Isbn = @Isbn", new {Isbn = isbn});
+        return result > 0; // if it was deleted or not
+
     }
 
     public async Task<IEnumerable<Book>> GetAllAsync()
