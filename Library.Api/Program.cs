@@ -1,5 +1,6 @@
 using FluentValidation;
 using FluentValidation.Results;
+using Library.Api;
 using Library.Api.Auth;
 using Library.Api.Data;
 using Library.Api.Models;
@@ -172,6 +173,31 @@ app.MapDelete("books/{isbn}", async (string isbn, IBookService bookSerivce) =>
 .Produces(204)
 .Produces(404)
 .WithTags("Books");
+
+
+//app.MapGet("status", () => //This will return as text, not as proper html; Results.Html does not exist, but Results.Extensions does that you can extend the interface for
+//{
+//    return @"<!doctype html>
+//<html>
+//    <head><title>Status page</title></head>
+//    <body>
+//        <h1>Status</h1>
+//        <p>The server is working fine. Bye bye!</p>
+//    </body>
+//</html>";
+//});
+app.MapGet("status", () => //This will return as text, not as proper html; Results.Html does not exist, but Results.Extensions does that you can extend the interface for
+{
+    return Results.Extensions.Html(@"<!doctype html>
+<html>
+    <head><title>Status page</title></head>
+    <body>
+        <h1>Status</h1>
+        <p>The server is working fine. Bye bye!</p>
+    </body>
+</html>");
+});
+
 
 
 // Db init here
