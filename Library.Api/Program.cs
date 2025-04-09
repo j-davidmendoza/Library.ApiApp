@@ -5,6 +5,7 @@ using Library.Api.Data;
 using Library.Api.Models;
 using Library.Api.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Json;
 using static System.Reflection.Metadata.BlobBuilder;
 
 //var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,14 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     //ContentRootPath = 
 });
 
+
+builder.Services.Configure<JsonOptions>(options =>
+{
+    //options.SerializerOptions.PropertyNamingPolicy = null; //This is the default but just to show you can change it
+    options.SerializerOptions.PropertyNameCaseInsensitive = true; //This is the default but just to show you can change it, if you dont care about case sensitivity
+    options.SerializerOptions.IncludeFields = true; //this is to allow fields are included in the serialization from the json object to the c# object                                                         
+    //These should cover most of the cases
+});
 
 
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true); //This is everything you need to add more configuration options for your own or 3rd party loads
