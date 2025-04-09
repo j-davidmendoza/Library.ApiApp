@@ -7,7 +7,17 @@ using Library.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using static System.Reflection.Metadata.BlobBuilder;
 
-var builder = WebApplication.CreateBuilder(args);
+//var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    //WebRootPath = "./wwwroot",
+    //EnvironmentName = Environment.GetEnvironmentVariable("env"),
+    //ApplicationName = "Library:Api",
+    //ContentRootPath = 
+});
+
+
 
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true); //This is everything you need to add more configuration options for your own or 3rd party loads
 
