@@ -50,6 +50,7 @@ app.UseSwaggerUI();
 
 app.UseAuthorization();//After swagger because you dont want swagger to be behind authentication
 
+app.MapGet("/", () => "Hello World!").WithName("LittleGetTest").WithTags("MiniTest");
 
 app.MapPost("books",
 //[Authorize(AuthenticationSchemes = ApiKeySchemeConstants.SchemeName)] //This is all you need to authorize this endpoint 
@@ -96,9 +97,13 @@ async (Book book, IBookService bookService,
 
     //This is a staticly typed way
     //return Results.Created($"/books/{book.Isbn}", book);
-}).WithName("CreateBook");//.AllowAnonymous(); //You can also do this to allow anonymous access to this endpoint using fluent method, approach is up to you
+}).WithName("CreateBook")
+.Accepts<Book>("application/json")
+.Produces<Book>(201)
+.Produces<IEnumerable<ValidationFailure>>(400)
+.WithTags("Books");
+//.AllowAnonymous(); //You can also do this to allow anonymous access to this endpoint using fluent method, approach is up to you
 
-app.MapGet("/", () => "Hello World!");
 
 //app.MapGet("books", async (IBookService bookService) =>
 //{
@@ -116,14 +121,19 @@ app.MapGet("books", async (IBookService bookService, string? searchTerm) =>
 
     var books = await bookService.GetAllAsync();
     return Results.Ok(books);
-}).WithName("GetBooks");
+}).WithName("GetBooks")
+.Produces<IEnumerable<Book>>(200)
+.WithTags("Books");
 
 //Possible to add regex checking here but would need it in the service layer also, for now just not having it unless it is only api layer specific 
 app.MapGet("books/{isbn}", async (string isbn, IBookService bookService) =>
 { 
     var book = await bookService.GetByIsbnAsync(isbn);
     return book is not null ? Results.Ok(book) : Results.NotFound(); //200 if it does exist 404 if it does not exist
-}).WithName("GetBook");
+}).WithName("GetBook")
+.Produces<Book>(200)
+.Produces(404)
+.WithTags("Books");
 
 
 app.MapPut("books/{isbn}", async (string isbn, Book book, IBookService bookService,
@@ -139,13 +149,20 @@ app.MapPut("books/{isbn}", async (string isbn, Book book, IBookService bookServi
     var updated = await bookService.UpdateAsync(book); //id is mutable so it ill be picked based on id
     return updated ? Results.Ok(book) : Results.NotFound();
 
-}).WithName("UpdateBook");
+}).WithName("UpdateBook")
+.Accepts<Book>("application/json")
+.Produces<Book>(201)
+.Produces<IEnumerable<ValidationFailure>>(400)
+.WithTags("Books");
 
 app.MapDelete("books/{isbn}", async (string isbn, IBookService bookSerivce) =>
 {
     var deleted = await bookSerivce.DeleteAsync(isbn);
     return deleted ? Results.NoContent() : Results.NotFound();
-}).WithName("DeleteBook");
+}).WithName("DeleteBook")
+.Produces(204)
+.Produces(404)
+.WithTags("Books");
 
 
 // Db init here
