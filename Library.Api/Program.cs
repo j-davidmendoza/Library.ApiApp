@@ -5,6 +5,7 @@ using Library.Api.Data;
 using Library.Api.Models;
 using Library.Api.Services;
 using Microsoft.AspNetCore.Authorization;
+using static System.Reflection.Metadata.BlobBuilder;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,7 +45,7 @@ app.MapPost("books",
 //[Authorize(AuthenticationSchemes = ApiKeySchemeConstants.SchemeName)] //This is all you need to authorize this endpoint 
 //[AllowAnonymous] // If you have security by default, you can use this to allow anonymous access to this endpoint, same way as good ole mvc
 async (Book book, IBookService bookService,
-    IValidator<Book> validator) =>
+    IValidator<Book> validator, LinkGenerator linker, HttpContext context) =>
 {
     var validationResult = await validator.ValidateAsync(book);
     if (!validationResult.IsValid)
@@ -66,8 +67,26 @@ async (Book book, IBookService bookService,
         });
     }
 
-    return Results.Created($"/books/{book.Isbn}", book);
-});//.AllowAnonymous(); //You can also do this to allow anonymous access to this endpoint using fluent method, approach is up to you
+
+    // using path will generate a link that looks like this: 	/ books / 978 - 0137081022
+    var path = linker.GetPathByName("GetBook", new { isbn = book.Isbn })!;
+    var locationUri = linker.GetUriByName(context, "GetBook", new { isbn = book.Isbn })!;
+    //Can use path or location Uri
+    //return Results.Created(path, book);
+    //Using location uri will return the full path like CreatedAtRoute
+    return Results.Created(locationUri, book);
+
+    // This approach 
+
+
+    //This will generate a headers value like: https://localhost:5001/books/978-0137081022
+    //This is a simple approach, wraps everything behind the scenes, but you might need the linker to do some complicated linking in my application 
+    // return Results.CreatedAtRoute("GetBook", new { isbn = book.Isbn }, book);
+
+
+    //This is a staticly typed way
+    //return Results.Created($"/books/{book.Isbn}", book);
+}).WithName("CreateBook");//.AllowAnonymous(); //You can also do this to allow anonymous access to this endpoint using fluent method, approach is up to you
 
 app.MapGet("/", () => "Hello World!");
 
@@ -87,14 +106,14 @@ app.MapGet("books", async (IBookService bookService, string? searchTerm) =>
 
     var books = await bookService.GetAllAsync();
     return Results.Ok(books);
-});
+}).WithName("GetBooks");
 
 //Possible to add regex checking here but would need it in the service layer also, for now just not having it unless it is only api layer specific 
 app.MapGet("books/{isbn}", async (string isbn, IBookService bookService) =>
 { 
     var book = await bookService.GetByIsbnAsync(isbn);
     return book is not null ? Results.Ok(book) : Results.NotFound(); //200 if it does exist 404 if it does not exist
-});
+}).WithName("GetBook");
 
 
 app.MapPut("books/{isbn}", async (string isbn, Book book, IBookService bookService,
@@ -110,13 +129,13 @@ app.MapPut("books/{isbn}", async (string isbn, Book book, IBookService bookServi
     var updated = await bookService.UpdateAsync(book); //id is mutable so it ill be picked based on id
     return updated ? Results.Ok(book) : Results.NotFound();
 
-});
+}).WithName("UpdateBook");
 
 app.MapDelete("books/{isbn}", async (string isbn, IBookService bookSerivce) =>
 {
     var deleted = await bookSerivce.DeleteAsync(isbn);
     return deleted ? Results.NoContent() : Results.NotFound();
-});
+}).WithName("DeleteBook");
 
 
 // Db init here
