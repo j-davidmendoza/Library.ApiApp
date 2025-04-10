@@ -6,6 +6,7 @@ using Library.Api.Data;
 using Library.Api.Models;
 using Library.Api.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http.Json;
 using static System.Reflection.Metadata.BlobBuilder;
 
@@ -17,6 +18,11 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     //EnvironmentName = Environment.GetEnvironmentVariable("env"),
     //ApplicationName = "Library:Api",
     //ContentRootPath = 
+});
+
+builder.Services.AddCors(options => 
+{
+    options.AddPolicy("AnyOrigin", x => x.AllowAnyOrigin());
 });
 
 
@@ -53,6 +59,8 @@ builder.Services.AddSingleton<DatabaseInitializer>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>(); // This will register all the validors in the assembly
 
 var app = builder.Build();
+
+app.UseCors();
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -186,7 +194,7 @@ app.MapDelete("books/{isbn}", async (string isbn, IBookService bookSerivce) =>
 //    </body>
 //</html>";
 //});
-app.MapGet("status", () => //This will return as text, not as proper html; Results.Html does not exist, but Results.Extensions does that you can extend the interface for
+app.MapGet("status1", () => //This will return as text, not as proper html; Results.Html does not exist, but Results.Extensions does that you can extend the interface for
 {
     return Results.Extensions.Html(@"<!doctype html>
 <html>
@@ -198,7 +206,30 @@ app.MapGet("status", () => //This will return as text, not as proper html; Resul
 </html>");
 });
 
-
+//Say you want to enable cors on this endpoint
+app.MapGet("status2", [EnableCors("AnyOrigin")]() => 
+{
+    return Results.Extensions.Html(@"<!doctype html>
+<html>
+    <head><title>Status page</title></head>
+    <body>
+        <h1>Status</h1>
+        <p>The server is working fine. Bye bye!</p>
+    </body>
+</html>");
+}).RequireCors("AnyOrigin"); //You can use the fluent approach to add cors to the endpoint or the attribute approach
+//As a bonus point you might want to exlude the "status" 
+app.MapGet("status3", [EnableCors("AnyOrigin")] () =>
+{
+    return Results.Extensions.Html(@"<!doctype html>
+<html>
+    <head><title>Status page</title></head>
+    <body>
+        <h1>Status</h1>
+        <p>The server is working fine. Bye bye!</p>
+    </body>
+</html>");
+}).ExcludeFromDescription(); //This will exclude the endpoint from swagger
 
 // Db init here
 var databaseInitializer = app.Services.GetRequiredService<DatabaseInitializer>();
