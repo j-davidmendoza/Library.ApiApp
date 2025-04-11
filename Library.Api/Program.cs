@@ -4,6 +4,7 @@ using Library.Api;
 using Library.Api.Auth;
 using Library.Api.Data;
 using Library.Api.Endpoints;
+using Library.Api.Endpoints.Internal;
 using Library.Api.Models;
 using Library.Api.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -48,8 +49,8 @@ builder.Services.AddSwaggerGen();
 
 //builder.Services.AddSingleton<IBookService, BookService>();
 //Replace teh above Bookservices with below addlibraryendpoitns 
-builder.Services.AddLibraryEndpoints();
-
+//builder.Services.AddLibraryEndpoints(); //Use the extension method to add the endpoints with iendpoints, this goes for approach v1 that is not dynamic
+builder.Services.AddEndpoints<Program>(builder.Configuration);
 
 
 //builder.Services.AddSingleton<IDbConnectionFactory>(_ =>
@@ -70,12 +71,12 @@ app.UseCors();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-
-app.UseAuthorization();//After swagger because you dont want swagger to be behind authentication
+app.UseEndpoints<Program>();
+//app.UseAuthorization();//After swagger because you dont want swagger to be behind authentication, ignoring for now
 
 app.MapGet("/", () => "Hello World!").WithName("LittleGetTest").WithTags("MiniTest");
 
-app.UseLibraryEndpoints();
+//app.UseLibraryEndpoints(); //This is for v1
 //Take the below and put it in a separate file, this is just to show you how to use the endpoints in program.cs but this is not a good strucutre to have all the endpoints in one file
 //app.MapPost("books",
 ////[Authorize(AuthenticationSchemes = ApiKeySchemeConstants.SchemeName)] //This is all you need to authorize this endpoint 
