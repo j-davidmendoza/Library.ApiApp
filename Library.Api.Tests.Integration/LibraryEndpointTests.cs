@@ -116,6 +116,63 @@ public class LibraryEndpointTests: IClassFixture<WebApplicationFactory<IApiMarke
         result.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+
+    [Fact]
+    public async Task GetBooks_ReturnsAllBooks_WhenBooksExist()
+    {
+        //Arrange
+        var httpClient = _factory.CreateClient();
+        var book = GenerateBook();
+        await httpClient.PostAsJsonAsync("/books", book);
+        _createdIsbns.Add(book.Isbn);
+        var books = new List<Book> { book };
+
+        //Act
+        var result = await httpClient.GetAsync("/books");
+        var returnedBooks = await result.Content.ReadFromJsonAsync<List<Book>>();
+
+        //Assert
+
+        result.StatusCode.Should().Be(HttpStatusCode.OK); 
+        returnedBooks.Should().BeEquivalentTo(books);
+    }
+
+    [Fact]
+    public async Task GetBooks_ReturnsNoBooks_WhenNoBooksExist()
+    {
+        //Arrange
+        var httpClient = _factory.CreateClient();
+
+        //Act
+        var result = await httpClient.GetAsync("/books");
+        var returnedBooks = await result.Content.ReadFromJsonAsync<List<Book>>();
+
+        //Assert
+
+        result.StatusCode.Should().Be(HttpStatusCode.OK);
+        returnedBooks.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task SearchBooks_ReturnBooks_WhenTitleMatches()
+    {
+        //Arrange
+        var httpClient = _factory.CreateClient();
+        var book = GenerateBook();
+        await httpClient.PostAsJsonAsync("/books", book);
+        _createdIsbns.Add(book.Isbn);
+        var books = new List<Book> { book };
+
+        //Act
+        var result = await httpClient.GetAsync("/books?searchTerm=oder");
+        var returnedBooks = await result.Content.ReadFromJsonAsync<List<Book>>();
+
+        //Assert
+
+        result.StatusCode.Should().Be(HttpStatusCode.OK);
+        returnedBooks.Should().BeEquivalentTo(books);
+    }
+
     private Book GenerateBook(string title = "The Dirty Coder")
     {
         return new Book
