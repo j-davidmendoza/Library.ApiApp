@@ -6,9 +6,11 @@ using System.Net;
 
 namespace Library.Api.Tests.Integration;
 
-public class LibraryEndpointTests: IClassFixture<WebApplicationFactory<IApiMarker>>
+public class LibraryEndpointTests: IClassFixture<WebApplicationFactory<IApiMarker>>, IAsyncLifetime
 {
     private readonly WebApplicationFactory<IApiMarker> _factory;
+    private readonly List<string> _createdIsbns = new();
+
 
     public LibraryEndpointTests(WebApplicationFactory<IApiMarker> factory)
     {
@@ -24,6 +26,7 @@ public class LibraryEndpointTests: IClassFixture<WebApplicationFactory<IApiMarke
 
         //Act
         var result = await httpClient.PostAsJsonAsync("/books", book);
+        _createdIsbns.Add(book.Isbn);
         var createdBook = await result.Content.ReadFromJsonAsync<Book>();
 
         //Assert
@@ -44,6 +47,7 @@ public class LibraryEndpointTests: IClassFixture<WebApplicationFactory<IApiMarke
 
         //Act
         var result = await httpClient.PostAsJsonAsync("/books", book);
+        _createdIsbns.Add(book.Isbn);
         var errors = await result.Content.ReadFromJsonAsync<IEnumerable<ValidationError>>();
         var error = errors!.Single();
 
@@ -65,6 +69,7 @@ public class LibraryEndpointTests: IClassFixture<WebApplicationFactory<IApiMarke
 
         //Act
         await httpClient.PostAsJsonAsync("/books", book);
+        _createdIsbns.Add(book.Isbn);
         var result = await httpClient.PostAsJsonAsync("/books", book);
         var errors = await result.Content.ReadFromJsonAsync<IEnumerable<ValidationError>>();
         var error = errors!.Single();
@@ -95,6 +100,17 @@ public class LibraryEndpointTests: IClassFixture<WebApplicationFactory<IApiMarke
     {
         return $"{Random.Shared.Next(100, 999)}-" +
                $"{Random.Shared.Next(1000000000, 2100999999)}";
+    }
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
+    {
+        var httpClient = _factory.CreateClient();
+        foreach (var createdIsbn in _createdIsbns)
+        {
+            await httpClient.DeleteAsync($"/books/{createdIsbn}");
+        }
     }
 
 
