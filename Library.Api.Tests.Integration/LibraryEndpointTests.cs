@@ -173,6 +173,70 @@ public class LibraryEndpointTests: IClassFixture<WebApplicationFactory<IApiMarke
         returnedBooks.Should().BeEquivalentTo(books);
     }
 
+    [Fact]
+    public async Task UpdateBook_UpdatesBook_WhenDataIsCorrect()
+    {
+        //Arrage
+        var httpClient = _factory.CreateClient();
+        var book = GenerateBook();
+        await httpClient.PostAsJsonAsync("/books", book);
+        _createdIsbns.Add(book.Isbn);
+        
+        //Act
+        book.PageCount = 69;
+        var result = await httpClient.PutAsJsonAsync($"/books/{book.Isbn}", book);
+        var updatedBook = await result.Content.ReadFromJsonAsync<Book>();
+
+        //Assert
+        result.StatusCode.Should().Be(HttpStatusCode.OK);
+        updatedBook.Should().BeEquivalentTo(book);
+
+    }
+
+
+    [Fact]
+    public async Task UpdateBook_DoesNotUpdateBook_WhenDataIsIncorrect()
+    {
+        //Arrage
+        var httpClient = _factory.CreateClient();
+        var book = GenerateBook();
+        await httpClient.PostAsJsonAsync("/books", book);
+        _createdIsbns.Add(book.Isbn);
+
+        //Act
+        book.Title = string.Empty;
+        var result = await httpClient.PutAsJsonAsync($"/books/{book.Isbn}", book);
+        //var updatedBook = await result.Content.ReadFromJsonAsync<Book>();
+        var errors = await result.Content.ReadFromJsonAsync<IEnumerable<ValidationError>>();
+        var error = errors!.Single();
+
+        //Assert
+        result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        //updatedBook.Should().BeEquivalentTo(book);
+        error.PropertyName.Should().Be("Title");
+        error.ErrorMessage.Should().Be("'Title' must not be empty.");
+
+    }
+
+
+    [Fact]
+    public async Task UpdateBook_ReturnsNotFound_WhenBookDoesNotExist()
+    {
+        //Arrage
+        var httpClient = _factory.CreateClient();
+        var book = GenerateBook();
+
+        //Act
+        var result = await httpClient.PutAsJsonAsync($"/books/{book.Isbn}", book);
+
+
+        //Assert
+        result.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+    }
+
+
+
     private Book GenerateBook(string title = "The Dirty Coder")
     {
         return new Book
