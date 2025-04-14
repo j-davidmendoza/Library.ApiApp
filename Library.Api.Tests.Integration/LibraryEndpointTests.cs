@@ -236,6 +236,37 @@ public class LibraryEndpointTests: IClassFixture<WebApplicationFactory<IApiMarke
     }
 
 
+    [Fact]
+    public async Task DeleteBook_ReturnsBookNotFound_WhenBookDoesNotExist()
+    {
+        //Arrange
+        var httpClient = _factory.CreateClient();
+        var isbn = GenerateIsbn();
+
+        //Act
+        var result = await httpClient.DeleteAsync($"/books/{isbn}");
+
+
+        //Assert
+        result.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DeleteBook_ReturnsNoContent_WhenBookDoesExist()
+    {
+        //Arrange
+        var httpClient = _factory.CreateClient();
+        var book = GenerateBook();
+        await httpClient.PostAsJsonAsync("/books", book);
+        _createdIsbns.Add(book.Isbn);
+
+        //Act
+        var result = await httpClient.DeleteAsync($"/books/{book.Isbn}");
+
+
+        //Assert
+        result.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
 
     private Book GenerateBook(string title = "The Dirty Coder")
     {
