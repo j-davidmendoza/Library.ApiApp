@@ -6,13 +6,13 @@ using System.Net;
 
 namespace Library.Api.Tests.Integration;
 
-public class LibraryEndpointTests: IClassFixture<WebApplicationFactory<IApiMarker>>, IAsyncLifetime
+public class LibraryEndpointTests: IClassFixture<LibraryApiFactory>, IAsyncLifetime
 {
-    private readonly WebApplicationFactory<IApiMarker> _factory;
+    private readonly LibraryApiFactory _factory;
     private readonly List<string> _createdIsbns = new();
 
 
-    public LibraryEndpointTests(WebApplicationFactory<IApiMarker> factory)
+    public LibraryEndpointTests(LibraryApiFactory factory)
     {
         _factory = factory;
     }
